@@ -1,0 +1,54 @@
+service: socket
+
+plugins:
+  - serverless-bundle
+  - serverless-pseudo-parameters
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  memorySize: 256
+  stage: ${opt:stage, 'dev'}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:BatchGetItem
+        - dynamodb:GetItem
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:BatchWriteItem
+        - dynamodb:PutItem
+        - dynamodb:DeleteItem
+        - dynamodb:UpdateItem
+        - dynamodb:CreateTable
+        - dynamodb:DescribeTable
+        - dynamodb:ListTables
+        - dynamodb:UpdateTable
+      Resource: "*"
+    - Effect: Allow
+      Action:
+        - "execute-api:ManageConnections"
+      Resource:
+        - "arn:aws:execute-api:*:*:**/@connections/*"
+
+functions:
+  connectHandler:
+    handler: src/handlers/chat.connectHandler
+    events:
+      - websocket:
+          route: $connect
+  disconnectHandler:
+    handler: src/handlers/chat.disconnectHandler
+    events:
+      - websocket:
+          route: $disconnect
+  defaultHandler:
+    handler: src/handlers/chat.defaultHandler
+    events:
+      - websocket:
+          route: $default
+  sendMessageHandler:
+    handler: src/handlers/chat.sendMessageHandler
+    events:
+      - websocket:
+          route: sendMessage
